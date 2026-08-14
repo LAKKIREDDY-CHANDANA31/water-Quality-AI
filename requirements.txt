@@ -1,1 +1,8 @@
+gunicornFlask
 gunicorn
+numpy
+pandas
+scikit-learn
+tensorflow
+torch
+pytorch-lightning
