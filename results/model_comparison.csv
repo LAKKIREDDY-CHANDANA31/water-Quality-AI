@@ -1,0 +1,4 @@
+Model,Accuracy,Precision,Recall,F1 Score
+DNN,66.62,57.14,40.98,47.73
+TabNet,61.13,46.86,33.61,39.14
+FT-Transformer,66.62,58.62,34.84,43.7

@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>AI Water Quality Dashboard</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(
+                135deg,
+                #eef9f8,
+                #e9f3f8
+            );
+            color: #24465b;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 94%;
+            max-width: 1250px;
+            margin: auto;
+            padding: 30px 0 50px;
+        }
+
+        /* ================= HEADER ================= */
+
+        .header {
+            background: linear-gradient(
+                135deg,
+                #477c96,
+                #72aeb5
+            );
+
+            border-radius: 26px;
+            padding: 36px 25px;
+            text-align: center;
+            color: white;
+
+            box-shadow:
+                0 15px 35px rgba(55, 100, 120, 0.15);
+
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+        }
+
+        .header p {
+            margin-top: 10px;
+            font-size: 17px;
+            opacity: 0.94;
+        }
+
+        /* ================= NAVIGATION ================= */
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+            margin: 18px 0 28px;
+            flex-wrap: wrap;
+        }
+
+        .navigation a {
+            text-decoration: none;
+            color: #477c96;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .navigation a:hover {
+            color: #285c74;
+        }
+
+        .navigation span {
+            color: #9bbac4;
+        }
+
+        /* ================= CARDS ================= */
+
+        .card {
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(160, 195, 205, 0.25);
+            border-radius: 23px;
+            padding: 30px;
+
+            box-shadow:
+                0 12px 30px rgba(55, 100, 120, 0.08);
+        }
+
+        /* ================= MAIN GRID ================= */
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        /* ================= SECTION TITLE ================= */
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin-bottom: 7px;
+        }
+
+        .section-icon {
+            width: 45px;
+            height: 45px;
+
+            border-radius: 14px;
+
+            background: #e7f4f5;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 22px;
+        }
+
+        .section-title h2 {
+            color: #376f88;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            margin-left: 58px;
+            color: #829ba8;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        /* ================= FORM ================= */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 17px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 7px;
+            color: #35576a;
+        }
+
+        .form-group input {
+            width: 100%;
+            height: 47px;
+
+            border: 1px solid #cadde3;
+            border-radius: 11px;
+
+            padding: 0 14px;
+
+            font-size: 14px;
+            color: #294b5e;
+
+            background: #fbfdfd;
+
+            outline: none;
+
+            transition: 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #72adb5;
+
+            box-shadow:
+                0 0 0 3px rgba(114, 173, 181, 0.13);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+            max-width: calc(50% - 8px);
+        }
+
+        /* ================= BUTTON ================= */
+
+        .analyze-btn {
+            grid-column: 1 / -1;
+
+            height: 53px;
+
+            border: none;
+            border-radius: 13px;
+
+            background: linear-gradient(
+                135deg,
+                #6ea9b1,
+                #82bec0
+            );
+
+            color: white;
+
+            font-size: 15px;
+            font-weight: 700;
+
+            cursor: pointer;
+
+            margin-top: 4px;
+
+            transition: 0.2s;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 8px 20px rgba(70, 140, 150, 0.18);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.65;
+            cursor: wait;
+            transform: none;
+        }
+
+        /* ================= RESULT ================= */
+
+        .result-card {
+            min-height: 560px;
+        }
+
+        .ready-state {
+            min-height: 420px;
+
+            display: flex;
+            flex-direction: column;
+
+            align-items: center;
+            justify-content: center;
+
+            text-align: center;
+        }
+
+        .ready-icon {
+            width: 70px;
+            height: 70px;
+
+            border-radius: 50%;
+
+            background: #e8f5f6;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 29px;
+
+            margin-bottom: 18px;
+        }
+
+        .ready-state h3 {
+            color: #39728b;
+            font-size: 24px;
+            margin-bottom: 9px;
+        }
+
+        .ready-state p {
+            max-width: 350px;
+            color: #829ba8;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        /* ================= RESULT BOX ================= */
+
+        .result-box {
+            background: #f7fbfc;
+
+            border-left: 5px solid #6faab2;
+
+            border-radius: 16px;
+
+            padding: 25px;
+
+            margin-top: 18px;
+        }
+
+        .prediction {
+            text-align: center;
+
+            font-size: 29px;
+
+            font-weight: 800;
+
+            margin-bottom: 25px;
+        }
+
+        .potable {
+            color: #38a36d;
+        }
+
+        .not-potable {
+            color: #d56a65;
+        }
+
+        .result-item {
+            margin-bottom: 19px;
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-item h3 {
+            color: #417b91;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .result-item p {
+            color: #3f5d6c;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .model-badge {
+            display: inline-block;
+
+            padding: 7px 12px;
+
+            background: #e8f4f5;
+
+            color: #39728b;
+
+            border-radius: 20px;
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+        /* ================= ERROR ================= */
+
+        .error-box {
+            background: #fff3f2;
+
+            color: #b85a56;
+
+            border: 1px solid #f1cdca;
+
+            border-radius: 12px;
+
+            padding: 14px;
+
+            margin-top: 18px;
+
+            font-size: 14px;
+        }
+
+        /* ================= FEATURES ================= */
+
+        .features {
+            margin-top: 24px;
+        }
+
+        .features-title {
+            text-align: center;
+
+            color: #39728b;
+
+            font-size: 24px;
+
+            margin-bottom: 23px;
+        }
+
+        .feature-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 16px;
+        }
+
+        .feature {
+            background: #edf7f8;
+
+            border: 1px solid #deedef;
+
+            border-radius: 14px;
+
+            padding: 17px;
+
+            text-align: center;
+
+            font-size: 14px;
+
+            font-weight: 650;
+
+            color: #41758a;
+
+            transition: 0.2s;
+        }
+
+        .feature:hover {
+            transform: translateY(-3px);
+
+            box-shadow:
+                0 8px 18px rgba(55, 100, 120, 0.08);
+        }
+
+        /* ================= AI ASSISTANT ================= */
+
+        .agent {
+            margin-top: 24px;
+        }
+
+        .agent-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .agent-header h2 {
+            color: #39728b;
+            font-size: 24px;
+        }
+
+        .agent-header p {
+            color: #829ba8;
+            margin-top: 7px;
+            font-size: 14px;
+        }
+
+        .agent-box {
+            background: #f8fbfc;
+
+            border-radius: 17px;
+
+            padding: 20px;
+        }
+
+        .agent-message {
+            background: white;
+
+            border: 1px solid #dfedf0;
+
+            border-radius: 13px;
+
+            padding: 17px;
+
+            color: #486575;
+
+            line-height: 1.6;
+
+            font-size: 14px;
+        }
+
+        /* ================= FOOTER ================= */
+
+        footer {
+            text-align: center;
+
+            margin-top: 32px;
+
+            padding-top: 23px;
+
+            border-top:
+                1px solid rgba(80, 130, 145, 0.20);
+
+            color: #78929f;
+
+            font-size: 12px;
+        }
+
+        footer p + p {
+            margin-top: 6px;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 850px) {
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                width: 92%;
+            }
+
+            .card {
+                padding: 21px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                max-width: 100%;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 27px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="header">
+
+        <h1>
+            💧 AI Water Quality Dashboard
+        </h1>
+
+        <p>
+            Intelligent Water Potability Prediction & Environmental Risk Assessment
+        </p>
+
+    </header>
+
+
+    <!-- =====================================================
+         NAVIGATION
+    ====================================================== -->
+
+    <nav class="navigation">
+
+        <a href="#dashboard">
+            AI Water Quality Dashboard
+        </a>
+
+        <span>•</span>
+
+        <a href="#features">
+            Project Features
+        </a>
+
+        <span>•</span>
+
+        <a href="#assistant">
+            AI Water Assistant
+        </a>
+
+    </nav>
+
+
+    <!-- =====================================================
+         MAIN DASHBOARD
+    ====================================================== -->
+
+    <section
+        id="dashboard"
+        class="main-grid"
+    >
+
+
+        <!-- =================================================
+             WATER PARAMETERS
+        ================================================== -->
+
+        <div class="card">
+
+            <div class="section-title">
+
+                <div class="section-icon">
+                    💧
+                </div>
+
+                <div>
+                    <h2>
+                        Water Quality Parameters
+                    </h2>
+                </div>
+
+            </div>
+
+
+            <div class="section-subtitle">
+
+                Enter the measured values for analysis
+
+            </div>
+
+
+            <!-- ERROR -->
+
+            <div
+                id="errorMessage"
+                class="error-box"
+                style="display:none;"
+            ></div>
+
+
+            <!-- =================================================
+                 PREDICTION FORM
+            ================================================== -->
+
+            <form id="predictionForm">
+
+                <div class="form-grid">
+
+
+                    <!-- pH -->
+
+                    <div class="form-group">
+
+                        <label for="ph">
+                            🧪 pH
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="ph"
+                            name="ph"
+                            placeholder="Enter pH value"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- HARDNESS -->
+
+                    <div class="form-group">
+
+                        <label for="hardness">
+                            ◈ Hardness
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="hardness"
+                            name="hardness"
+                            placeholder="Enter hardness"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- SOLIDS -->
+
+                    <div class="form-group">
+
+                        <label for="solids">
+                            💧 Solids
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="solids"
+                            name="solids"
+                            placeholder="Enter solids"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- CHLORAMINES -->
+
+                    <div class="form-group">
+
+                        <label for="chloramines">
+                            ◉ Chloramines
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="chloramines"
+                            name="chloramines"
+                            placeholder="Enter chloramines"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- SULFATE -->
+
+                    <div class="form-group">
+
+                        <label for="sulfate">
+                            ♟ Sulfate
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="sulfate"
+                            name="sulfate"
+                            placeholder="Enter sulfate"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- CONDUCTIVITY -->
+
+                    <div class="form-group">
+
+                        <label for="conductivity">
+                            ⚡ Conductivity
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="conductivity"
+                            name="conductivity"
+                            placeholder="Enter conductivity"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- ORGANIC CARBON -->
+
+                    <div class="form-group">
+
+                        <label for="organic_carbon">
+                            🌿 Organic Carbon
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="organic_carbon"
+                            name="organic_carbon"
+                            placeholder="Enter organic carbon"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- TRIHALOMETHANES -->
+
+                    <div class="form-group">
+
+                        <label for="trihalomethanes">
+                            🔬 Trihalomethanes
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="trihalomethanes"
+                            name="trihalomethanes"
+                            placeholder="Enter trihalomethanes"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- TURBIDITY -->
+
+                    <div class="form-group full-width">
+
+                        <label for="turbidity">
+                            🌊 Turbidity
+                        </label>
+
+                        <input
+                            type="number"
+                            step="any"
+                            id="turbidity"
+                            name="turbidity"
+                            placeholder="Enter turbidity"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- BUTTON -->
+
+                    <button
+                        type="submit"
+                        class="analyze-btn"
+                        id="analyzeButton"
+                    >
+                        Analyze Water Quality &nbsp; ✨
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <!-- =================================================
+             PREDICTION RESULT
+        ================================================== -->
+
+        <div class="card result-card">
+
+
+            <div class="section-title">
+
+                <div class="section-icon">
+                    🎯
+                </div>
+
+                <div>
+                    <h2>
+                        Prediction Result
+                    </h2>
+                </div>
+
+            </div>
+
+
+            <div class="section-subtitle">
+
+                AI-powered assessment from the DNN model
+
+            </div>
+
+
+            <!-- =================================================
+                 RESULT CONTENT
+            ================================================== -->
+
+            <div id="predictionContent">
+
+                <div class="ready-state">
+
+                    <div class="ready-icon">
+                        ✦
+                    </div>
+
+                    <h3>
+                        AI Ready
+                    </h3>
+
+                    <p>
+                        Enter all nine water-quality parameters
+                        and analyze the sample.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PROJECT FEATURES
+    ====================================================== -->
+
+    <section
+        id="features"
+        class="card features"
+    >
+
+        <h2 class="features-title">
+            🚀 Project Features
+        </h2>
+
+
+        <div class="feature-grid">
+
+            <div class="feature">
+                ✓ Deep Neural Network
+            </div>
+
+            <div class="feature">
+                ✓ TabNet
+            </div>
+
+            <div class="feature">
+                ✓ FT-Transformer
+            </div>
+
+            <div class="feature">
+                ✓ AI Risk Assessment
+            </div>
+
+            <div class="feature">
+                ✓ Environmental Analysis
+            </div>
+
+            <div class="feature">
+                ✓ Real-Time Prediction
+            </div>
+
+            <div class="feature">
+                ✓ AI Explanation
+            </div>
+
+            <div class="feature">
+                ✓ Prediction History
+            </div>
+
+            <div class="feature">
+                ✓ Flask Web Dashboard
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         AI WATER ASSISTANT
+    ====================================================== -->
+
+    <section
+        id="assistant"
+        class="card agent"
+    >
+
+        <div class="agent-header">
+
+            <h2>
+                🤖 AI Water Assistant
+            </h2>
+
+            <p>
+                Intelligent assistance for water-quality
+                analysis and prediction results.
+            </p>
+
+        </div>
+
+
+        <div class="agent-box">
+
+            <div class="agent-message">
+
+                <strong>
+                    AI Water Assistant
+                </strong>
+
+                <br><br>
+
+                Hello! I am your AI Water Assistant.
+                I can help explain water-quality parameters,
+                prediction results, confidence, risk levels
+                and recommendations.
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer>
+
+        <p>
+            Developed using Python • TensorFlow • Flask • Scikit-Learn
+        </p>
+
+        <p>
+            © 2026 AI Water Quality Dashboard
+        </p>
+
+    </footer>
+
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+    const form =
+        document.getElementById("predictionForm");
+
+    const button =
+        document.getElementById("analyzeButton");
+
+    const result =
+        document.getElementById("predictionContent");
+
+    const errorMessage =
+        document.getElementById("errorMessage");
+
+
+    form.addEventListener(
+        "submit",
+        async function(event) {
+
+            /*
+             * IMPORTANT:
+             * Stop the browser from opening
+             * the JSON response page.
+             */
+
+            event.preventDefault();
+
+
+            /* Hide previous error */
+
+            errorMessage.style.display = "none";
+
+            errorMessage.innerHTML = "";
+
+
+            /* Change button */
+
+            button.disabled = true;
+
+            button.innerHTML =
+                "Analyzing Water Quality... ⏳";
+
+
+            /*
+             * Collect the nine values
+             */
+
+            const data = {
+
+                ph:
+                    parseFloat(
+                        document.getElementById("ph").value
+                    ),
+
+                hardness:
+                    parseFloat(
+                        document.getElementById("hardness").value
+                    ),
+
+                solids:
+                    parseFloat(
+                        document.getElementById("solids").value
+                    ),
+
+                chloramines:
+                    parseFloat(
+                        document.getElementById("chloramines").value
+                    ),
+
+                sulfate:
+                    parseFloat(
+                        document.getElementById("sulfate").value
+                    ),
+
+                conductivity:
+                    parseFloat(
+                        document.getElementById("conductivity").value
+                    ),
+
+                organic_carbon:
+                    parseFloat(
+                        document.getElementById("organic_carbon").value
+                    ),
+
+                trihalomethanes:
+                    parseFloat(
+                        document.getElementById("trihalomethanes").value
+                    ),
+
+                turbidity:
+                    parseFloat(
+                        document.getElementById("turbidity").value
+                    )
+
+            };
+
+
+            try {
+
+
+                /*
+                 * Send data to Flask
+                 */
+
+                const response =
+                    await fetch(
+                        "/predict",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify(data)
+                        }
+                    );
+
+
+                /*
+                 * Convert Flask response
+                 * from JSON to JavaScript object
+                 */
+
+                const resultData =
+                    await response.json();
+
+
+                /*
+                 * Check whether Flask
+                 * reported an error
+                 */
+
+                if (
+                    !response.ok ||
+                    !resultData.success
+                ) {
+
+                    throw new Error(
+                        resultData.error ||
+                        "Prediction failed."
+                    );
+
+                }
+
+
+                /*
+                 * Determine result appearance
+                 */
+
+                const isPotable =
+                    resultData.prediction === "POTABLE";
+
+
+                const predictionClass =
+                    isPotable
+                        ? "potable"
+                        : "not-potable";
+
+
+                const predictionIcon =
+                    isPotable
+                        ? "✅"
+                        : "❌";
+
+
+                /*
+                 * Display prediction
+                 * inside the page.
+                 */
+
+                result.innerHTML = `
+
+                    <div class="result-box">
+
+
+                        <div
+                            class="prediction ${predictionClass}"
+                        >
+
+                            ${predictionIcon}
+
+                            ${resultData.prediction}
+
+                        </div>
+
+
+                        <div class="result-item">
+
+                            <h3>
+                                Model Used
+                            </h3>
+
+                            <p>
+
+                                <span class="model-badge">
+
+                                    ${resultData.model}
+
+                                </span>
+
+                            </p>
+
+                        </div>
+
+
+                        <div class="result-item">
+
+                            <h3>
+                                Confidence
+                            </h3>
+
+                            <p>
+                                ${resultData.confidence}
+                            </p>
+
+                        </div>
+
+
+                        <div class="result-item">
+
+                            <h3>
+                                Risk Level
+                            </h3>
+
+                            <p>
+                                ${resultData.risk}
+                            </p>
+
+                        </div>
+
+
+                        <div class="result-item">
+
+                            <h3>
+                                Recommendation
+                            </h3>
+
+                            <p>
+                                ${resultData.recommendation}
+                            </p>
+
+                        </div>
+
+
+                        <div class="result-item">
+
+                            <h3>
+                                AI Explanation
+                            </h3>
+
+                            <p>
+                                ${resultData.explanation}
+                            </p>
+
+                        </div>
+
+
+                    </div>
+
+                `;
+
+            }
+
+
+            catch (error) {
+
+
+                /*
+                 * Show errors inside the page
+                 * instead of opening a JSON page.
+                 */
+
+                errorMessage.style.display =
+                    "block";
+
+
+                errorMessage.innerHTML = `
+
+                    <strong>
+                        Prediction Error
+                    </strong>
+
+                    <br>
+
+                    ${error.message}
+
+                `;
+
+
+            }
+
+
+            finally {
+
+
+                /*
+                 * Restore button
+                 */
+
+                button.disabled = false;
+
+                button.innerHTML =
+                    "Analyze Water Quality &nbsp; ✨";
+
+            }
+
+        }
+    );
+
+</script>
+
+
+</body>
+
+</html>

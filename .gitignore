@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+venv312/
+.env
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# TensorFlow / Keras
+*.keras
+*.h5
+
+# PyTorch / Lightning
+*.ckpt
+*.pt
+*.pth
+.pt_tmp/
+lightning_logs/
+
+# Trained models
+saved_models/
+
+# Temporary files
+*.tmp
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# History / generated data
+history/
+History/
+
+# Python cache
+.pytest_cache/
