@@ -13,7 +13,7 @@ venv312/
 .ipynb_checkpoints/
 
 # TensorFlow / Keras
-*.keras
+# *.keras
 *.h5
 
 # PyTorch / Lightning
@@ -24,7 +24,7 @@ venv312/
 lightning_logs/
 
 # Trained models
-saved_models/
+# saved_models/
 
 # Temporary files
 *.tmp
