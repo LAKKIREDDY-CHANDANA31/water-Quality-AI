@@ -106,7 +106,10 @@ def predict():
         prediction, probability = \
             predict_water_quality(sample)
 
-
+        if prediction == 1:
+            confidence = probability
+        else:
+           confidence = 1 - probability
         # ----------------------------------------------------
         # RISK
         # ----------------------------------------------------
@@ -198,8 +201,7 @@ def predict():
 
             "prediction": prediction_text,
 
-            "confidence": f"{probability:.2%}",
-
+            "confidence": f"{confidence:.2%}",
             "probability": probability,
 
             "risk": risk,
