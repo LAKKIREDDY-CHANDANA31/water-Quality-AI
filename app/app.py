@@ -58,13 +58,13 @@ def predict():
 
     try:
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         if not data:
             return jsonify({
                 "success": False,
                 "error": "No data received."
-            }), 400
+            }), 500
 
 
         # ----------------------------------------------------

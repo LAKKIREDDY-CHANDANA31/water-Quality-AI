@@ -1,7 +1,16 @@
 import os
 import numpy as np
 import joblib
+import tensorflow as tf
 from tensorflow.keras.models import load_model
+
+
+# ============================================================
+# LIMIT TENSORFLOW RESOURCE USAGE FOR RENDER
+# ============================================================
+
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
 
 
 # ============================================================
@@ -40,18 +49,18 @@ scaler = joblib.load(SCALER_PATH)
 def predict_water_quality(sample):
 
     # Convert input to NumPy array
-    sample = np.array(sample, dtype=np.float32).reshape(1, -1)
+    sample = np.asarray(sample, dtype=np.float32).reshape(1, -1)
 
     # Scale input using the same scaler used during training
     sample_scaled = scaler.transform(sample)
 
-    # DNN prediction
-    probability = float(model.predict(sample_scaled, verbose=0)[0][0])
+    # Direct TensorFlow inference
+    # This avoids the extra overhead of model.predict()
+    probability = float(
+        model(sample_scaled, training=False).numpy()[0][0]
+    )
 
     # Convert probability into class
-    if probability >= 0.5:
-        prediction = 1
-    else:
-        prediction = 0
+    prediction = 1 if probability >= 0.5 else 0
 
     return prediction, probability
