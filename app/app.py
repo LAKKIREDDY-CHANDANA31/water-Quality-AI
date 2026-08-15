@@ -5,26 +5,31 @@ from datetime import datetime
 import sys
 
 # ============================================================
-# ADD PROJECT ROOT TO PYTHON PATH
+# PROJECT ROOT
 # ============================================================
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
 
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 
 # ============================================================
-# IMPORT AI COMPONENTS
+# AI COMPONENTS
 # ============================================================
 
+from agent.agent import answer_water_question
 from agent.predictor import predict_water_quality
 from agent.risk_assessment import assess_risk
 from agent.explanation import generate_explanation
 
 
 # ============================================================
-# FLASK APP
+# FLASK
 # ============================================================
 
 app = Flask(
@@ -41,19 +46,11 @@ app = Flask(
 @app.route("/")
 def home():
 
-    return render_template(
-        "index.html",
-        prediction=None,
-        confidence=None,
-        risk=None,
-        recommendation=None,
-        explanation=None,
-        error=None
-    )
+    return render_template("index.html")
 
 
 # ============================================================
-# WATER QUALITY PREDICTION API
+# PREDICT
 # ============================================================
 
 @app.route("/predict", methods=["POST"])
@@ -61,43 +58,32 @@ def predict():
 
     try:
 
-        # ----------------------------------------------------
-        # SUPPORT JSON FROM JAVASCRIPT
-        # ----------------------------------------------------
+        data = request.get_json()
 
-        if request.is_json:
-
-            data = request.get_json()
-
-            ph = float(data["ph"])
-            hardness = float(data["hardness"])
-            solids = float(data["solids"])
-            chloramines = float(data["chloramines"])
-            sulfate = float(data["sulfate"])
-            conductivity = float(data["conductivity"])
-            organic_carbon = float(data["organic_carbon"])
-            trihalomethanes = float(data["trihalomethanes"])
-            turbidity = float(data["turbidity"])
-
-        # ----------------------------------------------------
-        # ALSO SUPPORT NORMAL HTML FORM
-        # ----------------------------------------------------
-
-        else:
-
-            ph = float(request.form["ph"])
-            hardness = float(request.form["hardness"])
-            solids = float(request.form["solids"])
-            chloramines = float(request.form["chloramines"])
-            sulfate = float(request.form["sulfate"])
-            conductivity = float(request.form["conductivity"])
-            organic_carbon = float(request.form["organic_carbon"])
-            trihalomethanes = float(request.form["trihalomethanes"])
-            turbidity = float(request.form["turbidity"])
+        if not data:
+            return jsonify({
+                "success": False,
+                "error": "No data received."
+            }), 400
 
 
         # ----------------------------------------------------
-        # CREATE SAMPLE
+        # GET WATER PARAMETERS
+        # ----------------------------------------------------
+
+        ph = float(data["ph"])
+        hardness = float(data["hardness"])
+        solids = float(data["solids"])
+        chloramines = float(data["chloramines"])
+        sulfate = float(data["sulfate"])
+        conductivity = float(data["conductivity"])
+        organic_carbon = float(data["organic_carbon"])
+        trihalomethanes = float(data["trihalomethanes"])
+        turbidity = float(data["turbidity"])
+
+
+        # ----------------------------------------------------
+        # SAMPLE
         # ----------------------------------------------------
 
         sample = [
@@ -117,31 +103,34 @@ def predict():
         # DNN PREDICTION
         # ----------------------------------------------------
 
-        prediction, probability = predict_water_quality(sample)
+        prediction, probability = \
+            predict_water_quality(sample)
 
 
         # ----------------------------------------------------
-        # RISK ASSESSMENT
+        # RISK
         # ----------------------------------------------------
 
-        risk, recommendation = assess_risk(
-            prediction,
-            probability
-        )
-
-
-        # ----------------------------------------------------
-        # AI EXPLANATION
-        # ----------------------------------------------------
-
-        explanation = generate_explanation(
-            prediction,
-            probability
-        )
+        risk, recommendation = \
+            assess_risk(
+                prediction,
+                probability
+            )
 
 
         # ----------------------------------------------------
-        # PREDICTION TEXT
+        # EXPLANATION
+        # ----------------------------------------------------
+
+        explanation = \
+            generate_explanation(
+                prediction,
+                probability
+            )
+
+
+        # ----------------------------------------------------
+        # TEXT RESULT
         # ----------------------------------------------------
 
         prediction_text = (
@@ -157,13 +146,14 @@ def predict():
 
         history_directory = os.path.join(
             BASE_DIR,
-            "history"
+            "History"
         )
 
         os.makedirs(
             history_directory,
             exist_ok=True
         )
+
 
         history_file = os.path.join(
             history_directory,
@@ -199,7 +189,7 @@ def predict():
 
 
         # ----------------------------------------------------
-        # RETURN JSON FOR JAVASCRIPT
+        # RESPONSE
         # ----------------------------------------------------
 
         return jsonify({
@@ -218,14 +208,14 @@ def predict():
 
             "explanation": explanation,
 
-            "model": "Deep Neural Network (DNN)"
-
+            "model":
+                "Deep Neural Network (DNN)"
         })
 
 
     except Exception as e:
 
-        print("\nPREDICTION ERROR:")
+        print("PREDICTION ERROR:")
         print(str(e))
 
         return jsonify({
@@ -238,16 +228,117 @@ def predict():
 
 
 # ============================================================
-# RUN FLASK
+# AI WATER ASSISTANT
+# ============================================================
+
+@app.route("/ask", methods=["POST"])
+def ask():
+
+    try:
+
+        data = request.get_json()
+
+        if not data:
+
+            return jsonify({
+                "success": False,
+                "error": "No question data received."
+            }), 400
+
+
+        # ----------------------------------------------------
+        # GET QUESTION
+        # ----------------------------------------------------
+
+        question = data.get(
+            "question",
+            ""
+        ).strip()
+
+
+        # ----------------------------------------------------
+        # GET CURRENT RESULT
+        # ----------------------------------------------------
+
+        prediction = data.get(
+            "prediction"
+        )
+
+        confidence = data.get(
+            "confidence"
+        )
+
+        risk = data.get(
+            "risk"
+        )
+
+        recommendation = data.get(
+            "recommendation"
+        )
+
+        explanation = data.get(
+            "explanation"
+        )
+
+
+        # ----------------------------------------------------
+        # ASK AI AGENT
+        # ----------------------------------------------------
+
+        answer = answer_water_question(
+
+            question=question,
+
+            prediction=prediction,
+
+            confidence=confidence,
+
+            risk=risk,
+
+            recommendation=recommendation,
+
+            explanation=explanation
+        )
+
+
+        # ----------------------------------------------------
+        # RESPONSE
+        # ----------------------------------------------------
+
+        return jsonify({
+
+            "success": True,
+
+            "answer": answer
+
+        })
+
+
+    except Exception as e:
+
+        print("AI AGENT ERROR:")
+        print(str(e))
+
+        return jsonify({
+
+            "success": False,
+
+            "error": str(e)
+
+        }), 400
+
+
+# ============================================================
+# START SERVER
 # ============================================================
 
 if __name__ == "__main__":
 
     print("=" * 60)
-    print("WATER QUALITY AI")
+    print("          WATER QUALITY AI")
     print("=" * 60)
-    print("Model : Deep Neural Network (DNN)")
-    print("Server: http://127.0.0.1:5000")
+    print("Model  : Deep Neural Network (DNN)")
+    print("Server : http://127.0.0.1:5000")
     print("=" * 60)
 
     app.run(

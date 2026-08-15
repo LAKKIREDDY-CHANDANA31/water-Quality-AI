@@ -1,184 +1,32 @@
 /* ============================================================
-   WATER QUALITY DASHBOARD
+   AI WATER ASSISTANT
 ============================================================ */
+
+const assistantInput =
+    document.getElementById("assistantInput");
+
+const assistantSend =
+    document.getElementById("assistantSend");
+
+const chatArea =
+    document.getElementById("chatArea");
 
 
 /* ============================================================
-   ELEMENTS
+   STORE CURRENT PREDICTION
 ============================================================ */
 
-const predictionForm =
-    document.getElementById("predictionForm");
-
-const predictButton =
-    document.getElementById("predictButton");
-
-const resultEmpty =
-    document.getElementById("resultEmpty");
-
-const resultContent =
-    document.getElementById("resultContent");
-
-const predictionStatus =
-    document.getElementById("predictionStatus");
-
-const predictionIcon =
-    document.getElementById("predictionIcon");
-
-const predictionLabel =
-    document.getElementById("predictionLabel");
-
-const confidence =
-    document.getElementById("confidence");
-
-const riskLevel =
-    document.getElementById("riskLevel");
-
-const assessment =
-    document.getElementById("assessment");
-
-const recommendation =
-    document.getElementById("recommendation");
-
-const explanation =
-    document.getElementById("explanation");
+let latestPrediction = null;
 
 
 /* ============================================================
-   PREDICTION
-============================================================ */
-
-predictionForm.addEventListener(
-    "submit",
-    async function(event) {
-
-        event.preventDefault();
-
-
-        /* -----------------------------------------------
-           BUTTON LOADING STATE
-        ------------------------------------------------ */
-
-        predictButton.classList.add("loading");
-
-        predictButton.innerHTML =
-            "<span>Analyzing...</span><span>⏳</span>";
-
-
-        /* -----------------------------------------------
-           COLLECT VALUES
-        ------------------------------------------------ */
-
-        const formData =
-            new FormData(predictionForm);
-
-
-        const data = {
-
-            ph:
-                parseFloat(formData.get("ph")),
-
-            Hardness:
-                parseFloat(formData.get("Hardness")),
-
-            Solids:
-                parseFloat(formData.get("Solids")),
-
-            Chloramines:
-                parseFloat(formData.get("Chloramines")),
-
-            Sulfate:
-                parseFloat(formData.get("Sulfate")),
-
-            Conductivity:
-                parseFloat(formData.get("Conductivity")),
-
-            Organic_carbon:
-                parseFloat(
-                    formData.get("Organic_carbon")
-                ),
-
-            Trihalomethanes:
-                parseFloat(
-                    formData.get("Trihalomethanes")
-                ),
-
-            Turbidity:
-                parseFloat(
-                    formData.get("Turbidity")
-                )
-
-        };
-
-
-        /* -----------------------------------------------
-           SEND TO FLASK
-        ------------------------------------------------ */
-
-        try {
-
-            const response =
-                await fetch("/predict", {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify(data)
-
-                });
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    "Prediction request failed."
-                );
-
-            }
-
-
-            const result =
-                await response.json();
-
-
-            /* -------------------------------------------
-               SHOW RESULT
-            -------------------------------------------- */
-
-            displayPrediction(result);
-
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert(
-                "Unable to connect to the prediction service."
-            );
-
-        } finally {
-
-            predictButton.classList.remove(
-                "loading"
-            );
-
-            predictButton.innerHTML =
-                "<span>Analyze Water Quality</span><span>→</span>";
-        }
-
-    }
-);
-
-
-/* ============================================================
-   DISPLAY PREDICTION
+   SAVE PREDICTION RESULT
 ============================================================ */
 
 function displayPrediction(result) {
+
+    /* Save result for AI Assistant */
+    latestPrediction = result;
 
 
     /* -----------------------------------------------
@@ -203,11 +51,8 @@ function displayPrediction(result) {
        SHOW RESULT CARD
     ------------------------------------------------ */
 
-    resultEmpty.style.display =
-        "none";
-
-    resultContent.style.display =
-        "block";
+    resultEmpty.style.display = "none";
+    resultContent.style.display = "block";
 
 
     /* -----------------------------------------------
@@ -220,11 +65,9 @@ function displayPrediction(result) {
             "not-potable"
         );
 
-        predictionIcon.textContent =
-            "✓";
+        predictionIcon.textContent = "✓";
 
-        predictionLabel.textContent =
-            "POTABLE";
+        predictionLabel.textContent = "POTABLE";
 
     } else {
 
@@ -232,11 +75,9 @@ function displayPrediction(result) {
             "not-potable"
         );
 
-        predictionIcon.textContent =
-            "⚠";
+        predictionIcon.textContent = "⚠";
 
-        predictionLabel.textContent =
-            "NOT POTABLE";
+        predictionLabel.textContent = "NOT POTABLE";
     }
 
 
@@ -253,19 +94,11 @@ function displayPrediction(result) {
 
     if (confidenceValue !== null) {
 
-        let value =
-            parseFloat(confidenceValue);
-
-
-        /*
-         * If backend sends 0.5943,
-         * convert to 59.43.
-         */
+        let value = parseFloat(confidenceValue);
 
         if (value <= 1) {
-            value = value * 100;
+            value *= 100;
         }
-
 
         confidence.textContent =
             value.toFixed(2) + "%";
@@ -274,7 +107,6 @@ function displayPrediction(result) {
 
         confidence.textContent =
             "Available from model";
-
     }
 
 
@@ -283,8 +115,8 @@ function displayPrediction(result) {
     ------------------------------------------------ */
 
     riskLevel.textContent =
-        result.risk_level ??
         result.risk ??
+        result.risk_level ??
         calculateRisk(
             confidenceValue,
             isPotable
@@ -292,7 +124,7 @@ function displayPrediction(result) {
 
 
     /* -----------------------------------------------
-       AI ASSESSMENT
+       ASSESSMENT
     ------------------------------------------------ */
 
     assessment.textContent =
@@ -323,176 +155,7 @@ function displayPrediction(result) {
 
 
 /* ============================================================
-   DEFAULT RISK
-============================================================ */
-
-function calculateRisk(
-    confidenceValue,
-    isPotable
-) {
-
-    if (confidenceValue === null) {
-
-        return isPotable
-            ? "MODERATE RISK"
-            : "HIGH RISK";
-    }
-
-
-    let value =
-        parseFloat(confidenceValue);
-
-
-    if (value <= 1) {
-        value *= 100;
-    }
-
-
-    if (!isPotable) {
-
-        if (value >= 80) {
-            return "HIGH RISK";
-        }
-
-        return "MODERATE RISK";
-    }
-
-
-    if (value >= 80) {
-        return "LOW RISK";
-    }
-
-    if (value >= 60) {
-        return "MODERATE RISK";
-    }
-
-    return "MODERATE RISK";
-}
-
-
-/* ============================================================
-   DEFAULT ASSESSMENT
-============================================================ */
-
-function createAssessment(isPotable) {
-
-    if (isPotable) {
-
-        return (
-            "The DNN model predicts that the " +
-            "provided water sample is POTABLE."
-        );
-
-    }
-
-    return (
-        "The DNN model predicts that the " +
-        "provided water sample is NOT POTABLE."
-    );
-}
-
-
-/* ============================================================
-   DEFAULT RECOMMENDATION
-============================================================ */
-
-function createRecommendation(isPotable) {
-
-    if (isPotable) {
-
-        return (
-            "Water appears potable based on the " +
-            "provided parameters, but laboratory " +
-            "verification is recommended before " +
-            "large-scale consumption."
-        );
-
-    }
-
-    return (
-        "The water sample should not be considered " +
-        "safe for direct consumption. Further " +
-        "testing and appropriate treatment are recommended."
-    );
-}
-
-
-/* ============================================================
-   DEFAULT EXPLANATION
-============================================================ */
-
-function createExplanation(
-    isPotable,
-    confidenceValue
-) {
-
-    let confidenceText =
-        "the available prediction confidence";
-
-
-    if (confidenceValue !== null) {
-
-        let value =
-            parseFloat(confidenceValue);
-
-        if (value <= 1) {
-            value *= 100;
-        }
-
-        confidenceText =
-            value.toFixed(2) + "% confidence";
-    }
-
-
-    if (isPotable) {
-
-        return (
-            "The Deep Neural Network analyzed the " +
-            "nine measured water-quality parameters " +
-            "and classified the sample as POTABLE " +
-            "with " +
-            confidenceText +
-            ". Laboratory verification is still " +
-            "recommended for real-world use."
-        );
-
-    }
-
-
-    return (
-        "The Deep Neural Network analyzed the " +
-        "nine measured water-quality parameters " +
-        "and classified the sample as NOT POTABLE " +
-        "with " +
-        confidenceText +
-        ". Further investigation and treatment " +
-        "are recommended."
-    );
-}
-
-
-/* ============================================================
-   AI WATER ASSISTANT
-============================================================ */
-
-const assistantInput =
-    document.getElementById(
-        "assistantInput"
-    );
-
-const assistantSend =
-    document.getElementById(
-        "assistantSend"
-    );
-
-const chatArea =
-    document.getElementById(
-        "chatArea"
-    );
-
-
-/* ============================================================
-   SEND AI QUESTION
+   ASK AI WATER ASSISTANT
 ============================================================ */
 
 async function askWaterAssistant() {
@@ -507,7 +170,7 @@ async function askWaterAssistant() {
 
 
     /* -----------------------------------------------
-       USER MESSAGE
+       ADD USER MESSAGE
     ------------------------------------------------ */
 
     addUserMessage(question);
@@ -516,17 +179,15 @@ async function askWaterAssistant() {
 
 
     /* -----------------------------------------------
-       THINKING
+       THINKING MESSAGE
     ------------------------------------------------ */
 
     const thinking =
         document.createElement("div");
 
-    thinking.className =
-        "ai-message";
+    thinking.className = "ai-message";
 
     thinking.innerHTML = `
-
         <div class="chat-avatar">
             🤖
         </div>
@@ -542,7 +203,6 @@ async function askWaterAssistant() {
             </p>
 
         </div>
-
     `;
 
     chatArea.appendChild(thinking);
@@ -551,26 +211,57 @@ async function askWaterAssistant() {
 
 
     /* -----------------------------------------------
-       SEND TO FLASK AGENT
+       CHECK WHETHER PREDICTION EXISTS
+    ------------------------------------------------ */
+
+    if (!latestPrediction) {
+
+        thinking.remove();
+
+        addAIMessage(
+            "Please analyze a water sample first. Then I can answer questions about the prediction, confidence, risk, recommendation, and explanation."
+        );
+
+        return;
+    }
+
+
+    /* -----------------------------------------------
+       SEND QUESTION TO FLASK /ask
     ------------------------------------------------ */
 
     try {
 
         const response =
-            await fetch("/agent", {
+            await fetch("/ask", {
 
                 method: "POST",
 
                 headers: {
-
                     "Content-Type":
                         "application/json"
-
                 },
 
                 body: JSON.stringify({
 
-                    question: question
+                    question: question,
+
+                    prediction:
+                        latestPrediction.prediction,
+
+                    confidence:
+                        latestPrediction.confidence ??
+                        latestPrediction.probability,
+
+                    risk:
+                        latestPrediction.risk ??
+                        latestPrediction.risk_level,
+
+                    recommendation:
+                        latestPrediction.recommendation,
+
+                    explanation:
+                        latestPrediction.explanation
 
                 })
 
@@ -582,7 +273,6 @@ async function askWaterAssistant() {
             throw new Error(
                 "AI Agent request failed."
             );
-
         }
 
 
@@ -593,13 +283,24 @@ async function askWaterAssistant() {
         thinking.remove();
 
 
-        /* -------------------------------------------
-           RESPONSE
-        -------------------------------------------- */
+        /* -----------------------------------------------
+           SHOW AI RESPONSE
+        ------------------------------------------------ */
+
+        if (data.success === false) {
+
+            addAIMessage(
+                data.error ??
+                "The AI Assistant could not answer your question."
+            );
+
+            return;
+        }
+
 
         const answer =
-            data.response ??
             data.answer ??
+            data.response ??
             data.message ??
             "I could not generate a response.";
 
@@ -609,16 +310,17 @@ async function askWaterAssistant() {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "AI Assistant Error:",
+            error
+        );
 
         thinking.remove();
 
         addAIMessage(
-            "I am unable to connect to the AI Agent right now. Please try again."
+            "I am unable to connect to the AI Assistant right now."
         );
-
     }
-
 }
 
 
@@ -709,29 +411,35 @@ function scrollChat() {
 
 
 /* ============================================================
-   BUTTON
+   SEND BUTTON
 ============================================================ */
 
-assistantSend.addEventListener(
-    "click",
-    askWaterAssistant
-);
+if (assistantSend) {
+
+    assistantSend.addEventListener(
+        "click",
+        askWaterAssistant
+    );
+}
 
 
 /* ============================================================
    ENTER KEY
 ============================================================ */
 
-assistantInput.addEventListener(
-    "keydown",
-    function(event) {
+if (assistantInput) {
 
-        if (event.key === "Enter") {
+    assistantInput.addEventListener(
+        "keydown",
+        function(event) {
 
-            event.preventDefault();
+            if (event.key === "Enter") {
 
-            askWaterAssistant();
+                event.preventDefault();
+
+                askWaterAssistant();
+            }
+
         }
-
-    }
-);
+    );
+}

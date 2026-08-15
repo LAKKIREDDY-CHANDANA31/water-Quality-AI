@@ -1,24 +1,35 @@
 import os
-import joblib
 import numpy as np
+import joblib
+from tensorflow.keras.models import load_model
 
 
 # ============================================================
-# LOAD XGBOOST MODEL
+# PROJECT PATH
 # ============================================================
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MODEL_PATH = os.path.join(
+    BASE_DIR,
     "saved_models",
-    "xgboost_model.pkl"
+    "dnn_model.keras"
 )
 
 SCALER_PATH = os.path.join(
+    BASE_DIR,
     "saved_models",
     "scaler.pkl"
 )
 
 
-model = joblib.load(MODEL_PATH)
+# ============================================================
+# LOAD DNN MODEL
+# ============================================================
+
+model = load_model(MODEL_PATH)
+
+# Load the scaler used during training
 scaler = joblib.load(SCALER_PATH)
 
 
@@ -28,16 +39,19 @@ scaler = joblib.load(SCALER_PATH)
 
 def predict_water_quality(sample):
 
-    # Convert input to numpy array
-    sample = np.array(sample, dtype=float).reshape(1, -1)
+    # Convert input to NumPy array
+    sample = np.array(sample, dtype=np.float32).reshape(1, -1)
 
-    # Apply the same scaler used during training
+    # Scale input using the same scaler used during training
     sample_scaled = scaler.transform(sample)
 
-    # Prediction
-    prediction = model.predict(sample_scaled)[0]
+    # DNN prediction
+    probability = float(model.predict(sample_scaled, verbose=0)[0][0])
 
-    # Probability of Potable class
-    probability = model.predict_proba(sample_scaled)[0][1]
+    # Convert probability into class
+    if probability >= 0.5:
+        prediction = 1
+    else:
+        prediction = 0
 
-    return int(prediction), float(probability)
+    return prediction, probability
